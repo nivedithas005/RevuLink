@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RevuLink</title>
+    <style>
+        /* CSS Reset and Base Styles to match the React Design */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { width: 360px; height: 500px; background-color: #f3f4f6; color: #1f2937; overflow: hidden; }
+        
+        /* Header */
+        .header { background-color: #4f46e5; color: white; padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .logo { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 18px; }
+        .badge { background-color: #6366f1; font-size: 10px; padding: 2px 8px; border-radius: 9999px; border: 1px solid #818cf8; }
+
+        /* Main Content */
+        .container { height: calc(100% - 60px); overflow-y: auto; }
+
+        /* IDLE State */
+        #idle-view { padding: 24px; text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .icon-placeholder { width: 80px; height: 80px; background-color: #e0e7ff; color: #4f46e5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .btn-primary { background-color: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 20px; transition: background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+        .btn-primary:hover { background-color: #4338ca; }
+        
+        /* Loading State */
+        #loading-view { display: none; height: 100%; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top: 4px solid #4f46e5; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Results State */
+        #results-view { display: none; }
+        .product-header { background: white; padding: 16px; border-bottom: 1px solid #e5e7eb; }
+        .product-title { font-size: 14px; font-weight: 600; line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        .score-card { background: linear-gradient(to right, #4f46e5, #7c3aed); color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .score-display { font-size: 36px; font-weight: bold; }
+        
+        .section { padding: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .card { padding: 12px; border-radius: 8px; font-size: 12px; }
+        .card-green { background-color: #f0fdf4; border: 1px solid #dcfce7; color: #166534; }
+        .card-red { background-color: #fef2f2; border: 1px solid #fee2e2; color: #991b1b; }
+        .card h4 { margin-bottom: 8px; display: flex; align-items: center; gap: 4px; text-transform: uppercase; font-size: 11px; }
+        .card ul { list-style: none; }
+        .card li { margin-bottom: 4px; display: flex; gap: 4px; }
+        .card li:before { content: "•"; }
+
+        .video-item { display: flex; gap: 12px; padding: 8px; background: white; border-radius: 8px; margin-bottom: 8px; border: 1px solid #f3f4f6; }
+        .video-thumb { width: 60px; height: 40px; background-color: #fee2e2; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #dc2626; flex-shrink: 0; }
+        .video-info h5 { font-size: 12px; margin-bottom: 4px; font-weight: 500; }
+        .video-meta { font-size: 10px; color: #6b7280; display: flex; justify-content: space-between; width: 100%; }
+
+        /* Utility */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            RevuLink
+        </div>
+        <span class="badge">v1.0</span>
+    </div>
+
+    <!-- Container -->
+    <div class="container">
+        
+        <!-- View 1: Idle -->
+        <div id="idle-view">
+            <div class="icon-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <h2>Ready to Analyze</h2>
+            <p style="font-size: 13px; color: #6b7280; margin-top: 8px;">Go to a product page on Amazon/Flipkart and click below.</p>
+            <button id="scanBtn" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Analyze Page
+            </button>
+        </div>
+
+        <!-- View 2: Loading -->
+        <div id="loading-view">
+            <div class="spinner"></div>
+            <h3 style="font-size: 16px; margin-bottom: 4px;">Analyzing Social Data...</h3>
+            <p style="font-size: 12px; color: #6b7280;">Scanning YouTube & Reddit sentiments</p>
+        </div>
+
+        <!-- View 3: Results -->
+        <div id="results-view">
+            <div class="product-header">
+                <div class="product-title" id="p-title">Product Name</div>
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:#6b7280; margin-top:4px;">
+                    <span id="p-platform" style="border:1px solid #e5e7eb; padding:2px 6px; rounded:4px;">Amazon</span>
+                </div>
+            </div>
+
+            <div class="score-card">
+                <div>
+                    <div style="font-size:10px; opacity:0.8; text-transform:uppercase; letter-spacing:1px; font-weight:600;">AI Confidence</div>
+                    <div style="font-size:11px; opacity:0.8; margin-top:4px;"><span id="review-count">0</span> signals processed</div>
+                </div>
+                <div style="text-align:center;">
+                    <div class="score-display" id="ai-score">0.0</div>
+                    <div style="font-size:12px;">★★★★☆</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="grid-2">
+                    <div class="card card-green">
+                        <h4>Pros</h4>
+                        <ul id="pros-list"></ul>
+                    </div>
+                    <div class="card card-red">
+                        <h4>Cons</h4>
+                        <ul id="cons-list"></ul>
+                    </div>
+                </div>
+
+                <h3 style="font-size:14px; margin-bottom:12px; font-weight:600;">Video Insights</h3>
+                <div id="video-list">
+                    <!-- Videos injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script to handle Logic -->
+    <script>
+        document.getElementById('scanBtn').addEventListener('click', async () => {
+            // 1. Switch UI to Loading
+            document.getElementById('idle-view').style.display = 'none';
+            document.getElementById('loading-view').style.display = 'flex';
+
+            try {
+                // 2. Get Product Title from Content Script
+                const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+                
+                // Note: Ensure content.js is running on the page
+                chrome.tabs.sendMessage(tab.id, {action: "getProductDetails"}, async (response) => {
+                    if (chrome.runtime.lastError || !response) {
+                        alert("Could not read page. Make sure you are on Amazon or Flipkart.");
+                        resetUI();
+                        return;
+                    }
+
+                    const productTitle = response.title;
+                    document.getElementById('p-title').innerText = productTitle;
+                    document.getElementById('p-platform').innerText = new URL(tab.url).hostname;
+
+                    // 3. Send to Python Backend
+                    try {
+                        const res = await fetch('http://127.0.0.1:5000/analyze', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ query: productTitle })
+                        });
+                        
+                        const data = await res.json();
+                        renderResults(data);
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Error connecting to Python Backend. Is app.py running?");
+                        resetUI();
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                resetUI();
+            }
+        });
+
+        function renderResults(data) {
+            document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('results-view').style.display = 'block';
+
+            document.getElementById('ai-score').innerText = data.rating;
+            document.getElementById('review-count').innerText = data.total_reviews;
+
+            // Pros
+            const prosList = document.getElementById('pros-list');
+            prosList.innerHTML = data.pros.map(p => `<li>${p}</li>`).join('');
+
+            // Cons
+            const consList = document.getElementById('cons-list');
+            consList.innerHTML = data.cons.map(c => `<li>${c}</li>`).join('');
+
+            // Videos
+            const videoList = document.getElementById('video-list');
+            videoList.innerHTML = data.videos.map(v => `
+                <div class="video-item">
+                    <div class="video-thumb">▶</div>
+                    <div class="video-info" style="width:100%">
+                        <h5>${v.title}</h5>
+                        <div class="video-meta">
+                            <span>${v.channel}</span>
+                            <span style="background:#f3f4f6; padding:0 4px; border-radius:4px;">${v.sentiment}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function resetUI() {
+            document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('results-view').style.display = 'none';
+            document.getElementById('idle-view').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
