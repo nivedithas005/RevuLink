@@ -1,0 +1,126 @@
+{
+  "manifest_version": 3,
+  "name": "RevuLink: AI Social E-Commerce",
+  "version": "1.0",
+  "description": "Analyzes product sentiment from social media and provides an AI rating.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.amazon.in/*", "*://www.flipkart.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
+
+#### 2. `content.js`
+This script runs on the Amazon/Flipkart page. It "scrapes" the product title.
+
+```javascript
+// content.js
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "getProductDetails") {
+    // Selectors for Amazon and Flipkart
+    let title = "";
+    
+    // Attempt to find Amazon Title
+    const amazonTitle = document.getElementById("productTitle");
+    if (amazonTitle) title = amazonTitle.innerText.trim();
+    
+    // Attempt to find Flipkart Title
+    const flipkartTitle = document.querySelector(".B_NuCI"); 
+    if (flipkartTitle) title = flipkartTitle.innerText.trim();
+
+    sendResponse({ title: title || "Unknown Product", url: window.location.href });
+  }
+});
+
+#### 3. `popup.html`
+This is the skeleton of the UI (what we simulated in the React file). For a simple extension, you can use plain HTML/CSS.
+
+```html
+<!-- popup.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 320px; font-family: 'Segoe UI', sans-serif; padding: 15px; }
+    button { background: #4F46E5; color: white; border: none; padding: 10px; width: 100%; cursor: pointer; border-radius: 5px; }
+    button:hover { background: #4338ca; }
+    #result { margin-top: 15px; display: none; }
+    .score { font-size: 24px; font-weight: bold; color: #4F46E5; }
+  </style>
+</head>
+<body>
+  <h3>RevuLink AI</h3>
+  <p id="productName">Scanning...</p>
+  <button id="analyzeBtn">Analyze Sentiment</button>
+  
+  <div id="result">
+    <div class="score" id="scoreValue"></div>
+    <ul id="videoList"></ul>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+#### 4. `popup.js`
+This connects the button click to your (theoretical) Backend API.
+
+```javascript
+// popup.js
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Get the current tab's content
+  chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    chrome.tabs.sendMessage(tabs[0].id, {action: "getProductDetails"}, (response) => {
+      if(response && response.title) {
+        document.getElementById("productName").innerText = response.title;
+      }
+    });
+  });
+
+  // 2. Handle Analyze Button
+  document.getElementById("analyzeBtn").addEventListener("click", () => {
+    const title = document.getElementById("productName").innerText;
+    const btn = document.getElementById("analyzeBtn");
+    btn.innerText = "Analyzing...";
+
+    // HERE IS WHERE YOU CONNECT YOUR PYTHON BACKEND
+    // Ideally, you host a Flask/FastAPI server (e.g., localhost:5000/analyze)
+    fetch('http://localhost:5000/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ query: title })
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("result").style.display = "block";
+      document.getElementById("scoreValue").innerText = `AI Rating: ${data.rating}/10`;
+      btn.innerText = "Analyze Again";
+      // Render videos loop here...
+    })
+    .catch(err => {
+      console.error(err);
+      btn.innerText = "Error Connecting to AI";
+    });
+  });
+});
+
+### Next Steps for You (The Backend)
+Since you are skilled in Python and Data Science, the "Brain" of this extension should be a **Python Flask API**.
+
+1.  **Framework:** Use `Flask` or `FastAPI`.
+2.  **Logic:**
+    * Receive the `query` (Product Name) from the Chrome Extension.
+    * Use **YouTube Data API** to search for video titles/descriptions.
+    * Use **TextBlob** or **VADER** (or a HuggingFace Transformer model since you know QNN/AI) to analyze the sentiment of the video titles and top comments.
+    * Return a JSON response with `rating`, `pros`, `cons`.
+
+### How to Install
+1.  Save the manifest, HTML, and JS files into one folder.
+2.  Open Chrome and go to `chrome://extensions`.
+3.  Enable **Developer Mode** (top right toggle).
+4.  Click **Load Unpacked** and select your folder.
