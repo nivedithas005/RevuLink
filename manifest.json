@@ -1,23 +1,20 @@
-// Listen for messages from the popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getProductDetails") {
-    
-    let title = "Unknown Product";
-    
-    // 1. Try Amazon Selectors
-    const amazonTitle = document.getElementById("productTitle");
-    if (amazonTitle) {
-        title = amazonTitle.innerText.trim();
+{
+  "manifest_version": 3,
+  "name": "RevuLink",
+  "version": "1.0",
+  "description": "AI-powered product sentiment analysis",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": [
+    "http://127.0.0.1:5000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Analyze Product"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.amazon.in/*", "*://www.flipkart.com/*", "*://www.amazon.com/*"],
+      "js": ["content.js"]
     }
-
-    // 2. Try Flipkart Selectors (Flipkart classes change often, checking common ones)
-    // Class .B_NuCI is common for titles on Flipkart
-    const flipkartTitle = document.querySelector(".B_NuCI") || document.querySelector(".VU-ZEz"); 
-    if (flipkartTitle) {
-        title = flipkartTitle.innerText.trim();
-    }
-
-    console.log("RevuLink scanned:", title); // This shows up in the web page console (F12)
-    sendResponse({ title: title, url: window.location.href });
-  }
-});
+  ]
+}
